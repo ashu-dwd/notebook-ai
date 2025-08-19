@@ -1,0 +1,41 @@
+{
+  "name": "server",
+  "module": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "pino-pretty": "^13.1.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@chroma-core/default-embed": "^0.1.8",
+    "@chroma-core/google-gemini": "^0.1.7",
+    "@langchain/community": "^0.3.53",
+    "@langchain/core": "^0.3.72",
+    "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.2.0",
+    "chromadb": "^3.0.14",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.0.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "module-alias": "^2.2.3",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "openai": "^5.12.2",
+    "pdf-parse": "^1.1.1",
+    "pino": "^9.9.0",
+    "sqlite3": "^5.1.7",
+    "uuid": "^11.1.0",
+    "zod": "^4.0.17"
+  }
+}
