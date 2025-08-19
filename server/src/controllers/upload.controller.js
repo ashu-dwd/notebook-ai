@@ -61,7 +61,11 @@ export const handlePdfUpload = async (req, res) => {
 
     // 4️⃣ Response
     logger.info(`Added ${addResults.length} page vectors successfully.`);
-    return res.json({ success: true, count: addResults.length });
+    return res.json({
+      success: true,
+      count: addResults.length,
+      message: "PDF uploaded and processed successfully",
+    });
   } catch (error) {
     logger.error("❌ Error in PDF upload handling:", error);
     throw new ApiError(500, "Failed to process PDF upload", [error.message]);

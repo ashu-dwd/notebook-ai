@@ -1,3 +1,4 @@
+import { success } from "zod";
 import { searchVector } from "../services/chromadb.service.js";
 import { getEmbeddings, getTextResponse } from "../services/llm.service.js";
 import ApiError from "../utils/ApiError.js";
@@ -12,7 +13,11 @@ export const chatWithPdf = async (req, res) => {
     const results = await searchVector(embeddings);
     //console.log(results);
     const responseFromAI = await getTextResponse(userMsg, results);
-    return res.json({ response: responseFromAI });
+    return res.json({
+      success: true,
+      response: responseFromAI,
+      message: "Chat processed successfully",
+    });
   } catch (error) {
     console.log(error);
     logger.error("Error in chatWithPdf:", error.message);
