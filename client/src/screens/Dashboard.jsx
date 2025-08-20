@@ -97,7 +97,7 @@ export default function Dashboard() {
         }
       })
       .catch((error) => {
-        console.error("Error fetching files:", error);
+        //console.error("Error fetching files:", error);
         notify("❌ Failed to fetch files!", "error");
       });
   }, []);
@@ -160,7 +160,7 @@ export default function Dashboard() {
         }
       })
       .catch((error) => {
-        console.error("Error fetching chat history:", error);
+        //console.error("Error fetching chat history:", error);
         // Show welcome message on error
         setChatMessages([
           {
@@ -228,7 +228,7 @@ export default function Dashboard() {
         }
       })
       .catch((error) => {
-        console.error("Chat error:", error);
+        //console.error("Chat error:", error);
         notify("❌ Failed to get AI response!", "error");
       })
       .finally(() => {
@@ -281,7 +281,7 @@ export default function Dashboard() {
         }
       })
       .catch((error) => {
-        console.error("File upload error:", error);
+        //console.error("File upload error:", error);
         notify("❌ File upload failed!", "error");
       })
       .finally(() => {
@@ -301,7 +301,7 @@ export default function Dashboard() {
         }
       })
       .catch((error) => {
-        console.error("File deletion error:", error);
+        //console.error("File deletion error:", error);
         notify("❌ File deletion failed!", "error");
       });
   };
