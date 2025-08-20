@@ -8,7 +8,7 @@ WORKDIR /app
 COPY server/package.json server/bun.lock ./
 
 # Install only production dependencies
-RUN bun install --production --frozen-lockfile
+RUN bun install --production --frozen-lockfile --prebuilt
 
 # Copy the rest of the server source code
 COPY server/ ./
