@@ -5,13 +5,13 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Install pnpm
-RUN npm install -g bun
+RUN npm install -g pnpm
 
 # Copy only server package files first (for caching)
-COPY server/package.json server/bun.lock ./
+COPY server/package.json server/pnpm-lock.yaml ./
 
 # Install only production dependencies
-RUN bun install --prod
+RUN pnpm install --prod
 
 # Copy the rest of the server source code
 COPY server/ ./
@@ -20,4 +20,4 @@ COPY server/ ./
 EXPOSE 8080
 
 # Start command
-CMD ["bun", "start"]
+CMD ["pnpm", "start"]

@@ -188,29 +188,6 @@ export default function Login() {
               </div>
             </form>
 
-            {/* Social Login Options */}
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">
-                    Or sign in with
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <button className="w-full border-2 border-black py-2 px-4 font-semibold hover:bg-black hover:text-white transition-colors">
-                  Google
-                </button>
-                <button className="w-full border-2 border-black py-2 px-4 font-semibold hover:bg-black hover:text-white transition-colors">
-                  GitHub
-                </button>
-              </div>
-            </div>
-
             {/* Security Note */}
             <div className="mt-8 p-4 border border-gray-300 bg-gray-50">
               <p className="text-xs text-gray-600 text-center">

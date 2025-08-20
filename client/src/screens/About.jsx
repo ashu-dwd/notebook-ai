@@ -12,6 +12,7 @@ import {
   User,
 } from "lucide-react";
 import Nav from "../components/Nav";
+import { Link } from "react-router-dom";
 
 export default function About() {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
@@ -25,13 +26,13 @@ export default function About() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Back Link */}
         <div className="mb-8">
-          <a
-            href="#"
+          <Link
+            to="/"
             className="flex items-center text-gray-600 hover:text-black transition-colors"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to home
-          </a>
+          </Link>
         </div>
 
         {/* Hero Section */}
@@ -49,10 +50,7 @@ export default function About() {
           <div className="order-2 md:order-1">
             <div className="relative">
               <div className="w-full aspect-square bg-gray-100 border-2 border-black flex items-center justify-center">
-                <div className="text-center">
-                  <User className="h-24 w-24 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500">Developer Photo</p>
-                </div>
+                <img src="/dev.jpg" alt="Developer Photo " />
               </div>
               {/* Decorative border */}
               <div className="absolute -bottom-4 -right-4 w-full h-full border-2 border-black -z-10"></div>
@@ -61,33 +59,32 @@ export default function About() {
 
           {/* Developer Info */}
           <div className="order-1 md:order-2">
-            <h2 className="text-3xl font-bold mb-4">Meet Alex Chen</h2>
+            <h2 className="text-3xl font-bold mb-4">Meet Raghvendra Dwivedi</h2>
             <p className="text-lg text-gray-700 mb-6">
-              Full-Stack Developer & AI Enthusiast
+              Web Developer Intern & AI Enthusiast
             </p>
 
             <div className="prose text-gray-700 space-y-4">
               <p>
-                Alex is a passionate software engineer with 5+ years of
-                experience in building intelligent applications. After
-                struggling with research during graduate studies, Alex
-                envisioned a tool that could make document analysis as simple as
-                having a conversation.
+                Raghvendra is a BCA student at IGNOU University, currently
+                working as a Web Development Intern at Cangra Talents.
+                Experienced in building real-world applications with React.js,
+                Node.js, MongoDB, and PHP, he also contributes as a technical
+                blogger on modern web development topics.
               </p>
 
               <p>
-                When not coding, you'll find Alex exploring the latest AI
-                research papers, contributing to open-source projects, or
-                experimenting with new machine learning models. A firm believer
-                that technology should augment human intelligence, not replace
-                it.
+                Passionate about creating clean, user-friendly websites with a
+                growing interest in Artificial Intelligence and Machine Learning
+                technologies. Outside of work, he actively participates in
+                hackathons, builds side projects, and explores new tech stacks.
               </p>
             </div>
 
             {/* Social Links */}
             <div className="mt-8 flex space-x-4">
               <a
-                href="https://github.com/alexchen"
+                href="https://github.com/ashu-dwd"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2 px-4 py-2 border-2 border-black hover:bg-black hover:text-white transition-colors"
@@ -98,7 +95,7 @@ export default function About() {
               </a>
 
               <a
-                href="https://twitter.com/alexchen_dev"
+                href="http://x.com/raghavdwd"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2 px-4 py-2 border-2 border-black hover:bg-black hover:text-white transition-colors"
@@ -109,7 +106,7 @@ export default function About() {
               </a>
 
               <a
-                href="https://instagram.com/alexchen.codes"
+                href="https://instagram.com/raghavv.dwivedi"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2 px-4 py-2 border-2 border-black hover:bg-black hover:text-white transition-colors"
@@ -134,10 +131,10 @@ export default function About() {
                 The Problem
               </h4>
               <p className="text-gray-700 text-sm leading-relaxed">
-                During research for a machine learning thesis, Alex spent
-                countless hours manually searching through hundreds of academic
-                papers. The process was tedious, inefficient, and often led to
-                missing crucial information buried deep within documents.
+                During his studies, Raghvendra often found it challenging to
+                quickly extract meaningful insights from large sets of
+                documents. The process was tedious, time-consuming, and prone to
+                missing crucial information hidden deep inside.
               </p>
             </div>
 
@@ -147,10 +144,10 @@ export default function About() {
                 The Solution
               </h4>
               <p className="text-gray-700 text-sm leading-relaxed">
-                What if you could just ask questions to your documents?
-                NotebookAI was born from this simple idea - using modern AI to
-                create an intelligent research assistant that understands
-                context and provides instant, accurate answers.
+                NotebookAI was envisioned as a tool to change that. By combining
+                modern AI with intuitive design, it provides a conversational
+                way to interact with documents — making research faster and
+                smarter.
               </p>
             </div>
           </div>
@@ -222,13 +219,13 @@ export default function About() {
 
           <div className="flex justify-center space-x-6">
             <a
-              href="mailto:alex@notebookai.com"
+              href="mailto:raghavdwd@gmail.com"
               className="border-2 border-white px-6 py-2 hover:bg-white hover:text-black transition-colors"
             >
               Send Email
             </a>
             <a
-              href="#"
+              href="callto:8887948767"
               className="bg-white text-black px-6 py-2 hover:bg-gray-100 transition-colors"
             >
               Schedule a Call
@@ -260,7 +257,7 @@ export default function About() {
           </div>
 
           <div className="border-t border-gray-200 mt-6 pt-6 text-center text-gray-600 text-sm">
-            <p>&copy; 2025 NotebookAI. Built with ❤️ by Alex Chen</p>
+            <p>&copy; 2025 NotebookAI. Built with ❤️ by Raghvendra Dwivedi</p>
           </div>
         </div>
       </footer>

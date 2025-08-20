@@ -9,10 +9,12 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Nav from "../components/Nav";
 
 export default function Home() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-white text-black">
       <Nav />
@@ -28,11 +30,17 @@ export default function Home() {
             AI-powered research assistant that understands your content.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-black text-white px-8 py-4 text-lg font-semibold hover:bg-gray-800 transition-colors flex items-center justify-center">
+            <button
+              onClick={() => navigate("/signup")}
+              className="bg-black text-white px-8 py-4 text-lg font-semibold hover:bg-gray-800 transition-colors flex items-center justify-center"
+            >
               Get Started Free
               <ChevronRight className="ml-2 h-5 w-5" />
             </button>
-            <button className="border-2 border-black px-8 py-4 text-lg font-semibold hover:bg-black hover:text-white transition-colors">
+            <button
+              onClick={() => alert("Demo video coming soon!")}
+              className="border-2 border-black px-8 py-4 text-lg font-semibold hover:bg-black hover:text-white transition-colors"
+            >
               Watch Demo
             </button>
           </div>
@@ -139,10 +147,16 @@ export default function Home() {
             NotebookAI to unlock insights from their documents.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-black px-8 py-4 text-lg font-semibold hover:bg-gray-100 transition-colors">
+            <button
+              onClick={() => navigate("/signup")}
+              className="bg-white text-black px-8 py-4 text-lg font-semibold hover:bg-gray-100 transition-colors"
+            >
               Start Free Trial
             </button>
-            <button className="border-2 border-white px-8 py-4 text-lg font-semibold hover:bg-white hover:text-black transition-colors">
+            <button
+              onClick={() => alert("Demo video coming soon!")}
+              className="border-2 border-white px-8 py-4 text-lg font-semibold hover:bg-white hover:text-black transition-colors"
+            >
               Schedule Demo
             </button>
           </div>
