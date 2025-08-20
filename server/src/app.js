@@ -35,3 +35,7 @@ app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/chat", chatRoute);
 app.use("/api/v1/users", verifyJwtToken, userRoute);
 app.use("/api/v1/upload", uploadRoute);
+
+app.get("/", (req, res) => {
+  res.send("Welcome to the Notebook API");
+});
