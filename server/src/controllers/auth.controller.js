@@ -1,8 +1,7 @@
 import bcrypt from "bcrypt";
 import { createJwtToken } from "../utils/jwtMaker.js";
 import { runQuery } from "../database/sqlLite.db.js";
-import { success } from "zod";
-import { da } from "zod/v4/locales";
+import cookieParser from "cookie-parser";
 
 export const handleUserSignUp = async (req, res) => {
   const { name, email, password } = req.body;
@@ -29,20 +28,33 @@ export const handleUserSignUp = async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Create new user
-  const newUser = runQuery(
+  const newUser = await runQuery(
     `
     INSERT INTO userData (name, email, password)
     VALUES (?, ?, ?)
   `,
     [name, email, hashedPassword]
   );
+  console.log(newUser);
 
   // Generate JWT
-  const token = createJwtToken(email);
+  const { accessToken, refreshToken } = createJwtToken(
+    email,
+    newUser.lastInsertRowid
+  );
 
-  return res
-    .status(201)
-    .json({ success: true, data: { token }, message: "SignUp successful" });
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true, // Only send cookie over HTTPS
+    sameSite: "strict", // Protect against CSRF attacks
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
+  return res.status(201).json({
+    success: true,
+    data: { accessToken },
+    message: "SignUp successful",
+  });
 };
 
 export const handleUserLogin = async (req, res) => {
@@ -68,9 +80,21 @@ export const handleUserLogin = async (req, res) => {
   }
 
   // Generate JWT
-  const token = createJwtToken(user[0].email);
+  const { accessToken, refreshToken } = createJwtToken(
+    user[0].email,
+    user[0].userId
+  );
 
-  return res
-    .status(200)
-    .json({ success: true, data: { token }, message: "Login successful" });
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true, // Only send cookie over HTTPS
+    sameSite: "strict", // Protect against CSRF attacks
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
+  return res.status(200).json({
+    success: true,
+    data: { accessToken },
+    message: "Login successful",
+  });
 };

@@ -1,3 +1,5 @@
+import * as dotenv from "dotenv";
+dotenv.config({ path: "./.env.local" });
 import http from "http";
 import { app } from "./src/app.js";
 import { logger } from "./src/utils/logger.js";

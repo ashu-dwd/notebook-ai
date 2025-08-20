@@ -44,9 +44,10 @@ function normalizeEmbedding(emb) {
 }
 
 export const addVector = async ({
-  id = uuid(),
+  id,
   embedding,
   text,
+  userId,
   metadata = {},
 }) => {
   const vec = normalizeEmbedding(embedding);
@@ -56,19 +57,22 @@ export const addVector = async ({
   for (const [key, value] of Object.entries(metadata)) {
     flatMetadata[key] = normalizeMetadata(value);
   }
+  try {
+    const res = await collection.add({
+      ids: [id],
+      documents: [String(text ?? "")],
+      metadatas: [{ userId, ...flatMetadata }],
+      embeddings: [vec],
+    });
+    console.log(res);
 
-  await collection.add({
-    ids: [id],
-    documents: [String(text ?? "")],
-    metadatas: [flatMetadata],
-    embeddings: [vec],
-  });
-
-  return { id };
+    return { id };
+  } catch (error) {
+    console.error("Error adding vector:", error);
+  }
 };
 
-export const searchVector = async (embedding, n_results = 2) => {
-  console.log(typeof embedding);
+export const searchVector = async (embedding, userId, n_results = 2) => {
   if (
     !Array.isArray(embedding) ||
     !embedding.every((x) => typeof x === "number")
@@ -76,10 +80,23 @@ export const searchVector = async (embedding, n_results = 2) => {
     throw new Error("Invalid embedding: must be an array of numbers");
   }
 
-  const results = await collection.query({
-    queryEmbeddings: [embedding], // array of embedding vectors
+  return await collection.query({
+    queryEmbeddings: [embedding],
     n_results,
+    where: { userId: { $eq: userId } }, // ✅ search restricted to that user
   });
+};
 
-  return results;
+export const deleteVector = async (id) => {
+  if (!id) {
+    throw new Error("Vector ID is required for deletion");
+  }
+  try {
+    const res = await collection.delete({
+      ids: [id],
+    });
+    console.log("🗑️ Vector deleted:", res);
+  } catch (error) {
+    console.error("Error deleting vector:", error);
+  }
 };

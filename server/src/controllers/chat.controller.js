@@ -1,19 +1,61 @@
-import { success } from "zod";
 import { searchVector } from "../services/chromadb.service.js";
 import { getEmbeddings, getTextResponse } from "../services/llm.service.js";
 import ApiError from "../utils/ApiError.js";
 import { logger } from "../utils/logger.js";
 
+import { db, runQuery } from "../database/sqlLite.db.js";
+
 export const chatWithPdf = async (req, res) => {
-  const { userMsg, chatId } = req.body;
+  const { userMsg } = req.body;
+  const user = await runQuery(
+    "SELECT userId FROM userData WHERE email = ? LIMIT 1",
+    [req.user.email]
+  );
+
   logger.info(userMsg);
+
   try {
+    // Fetch chatId
+    const files = await runQuery("SELECT chatId FROM files WHERE userId = ?", [
+      user.userId,
+    ]);
+
+    if (!files || files.length === 0) {
+      return res.json({
+        success: false,
+        message: "No files uploaded. Please upload files to start chatting.",
+      });
+    }
+
+    const chatId = files[0].chatId;
+    console.log("chatid", chatId);
+
+    // Generate embedding
     const embeddings = await getEmbeddings(userMsg);
-    //console.log(embeddings.length);
-    const results = await searchVector(embeddings);
-    //console.log(results);
+    console.log("embedding length", embeddings.length);
+
+    // ✅ Flatten vectorIds
+    const vectorRows = await runQuery(
+      `SELECT vectorId FROM files WHERE userId = ?`,
+      [req.user.userId]
+    );
+    const vectorIds = vectorRows.map((row) => row.vectorId);
+    console.log("vectorIds", vectorIds);
+
+    // Query Chroma
+    const results = await searchVector(embeddings, req.user.userId);
+    console.log("chroma results", results);
+
+    // Get AI response
     const responseFromAI = await getTextResponse(userMsg, results);
-    return res.json({
+    //saving into database
+    await runQuery(
+      `INSERT INTO chats (userId, userMsg, aiResponse) VALUES (?, ?, ?)`,
+      [user.userId, userMsg, responseFromAI]
+    );
+    logger.info("Chat history saved successfully");
+
+    return res.status(200).json({
       success: true,
       response: responseFromAI,
       message: "Chat processed successfully",
@@ -24,4 +66,5 @@ export const chatWithPdf = async (req, res) => {
     throw new ApiError("Failed to process chat request", 500);
   }
 };
+
 // export const handleUserChats = (req,res)={}

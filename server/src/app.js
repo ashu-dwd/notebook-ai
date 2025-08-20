@@ -7,6 +7,9 @@ import { rateLimit } from "express-rate-limit";
 import authRoute from "./routes/auth.route.js";
 import uploadRoute from "./routes/upload.route.js";
 import chatRoute from "./routes/chat.route.js";
+import userRoute from "./routes/user.route.js";
+import cookieParser from "cookie-parser";
+import { verifyJwtToken } from "./middlewares/auth.middleware.js";
 
 export const app = express();
 
@@ -30,5 +33,5 @@ app.use(express.urlencoded({ extended: true }));
 //api endpoints
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/chat", chatRoute);
-//app.use("/api/v1/user", userRoute);
+app.use("/api/v1/users", verifyJwtToken, userRoute);
 app.use("/api/v1/upload", uploadRoute);

@@ -43,6 +43,7 @@ db.prepare(
     userId     INTEGER NOT NULL,
     filePath   TEXT NOT NULL,
     vectorId   TEXT,
+    chatId     TEXT,
     uploadedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (userId) REFERENCES userData(userId) ON DELETE CASCADE
   )

@@ -53,7 +53,7 @@ export default function Signup() {
       })
       .then(({ data }) => {
         if (data.success) {
-          const token = data.data?.token;
+          const token = data.data?.accessToken;
           setToken(token);
           notify("✅ Signup successful!", "success");
           navigate("/dashboard");

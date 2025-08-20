@@ -34,7 +34,7 @@ export default function Login() {
       const response = await axiosInstance.post("/auth/login", formData);
       if (response.data.success) {
         setIsLoading(false);
-        const token = response.data.data?.token;
+        const token = response.data.data?.accessToken;
         setToken(token);
         notify("✅ Login successful!", "success");
         navigate("/dashboard");
