@@ -1,40 +1,45 @@
-# Use a Node.js LTS version as the base image
+# --- Builder Stage ---
 FROM node:18-alpine AS builder
 
-# Set working directory
+# Install Bun
+RUN apk add --no-cache curl bash \
+    && curl -fsSL https://bun.sh/install | bash \
+    && mv /root/.bun/bin/bun /usr/local/bin/
+
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g bun
+# Copy only package files first (for caching)
+COPY server/package.json ./server/
+COPY client/package.json ./client/
 
-# Copy only server package files first (for caching)
-COPY server/package.json server/bun.lockb ./server/
-COPY client/package.json client/bun.lockb ./client/
+# Install dependencies
+RUN cd server && bun install && cd ../client && bun install
 
-# Install only production dependencies
-RUN bun install
+# Copy the rest of the source
+COPY server ./server
+COPY client ./client
 
-# Copy the rest of the server source code
-COPY server/ ./server/
-COPY client/ ./client/
-
-# Build the React application
+# Build frontend
 RUN cd client && bun run build
 
-# Use a Node.js LTS version as the base image for the production image
+# --- Final Stage ---
 FROM node:18-alpine
 
-# Set working directory
+# Install Bun in final stage
+RUN apk add --no-cache curl bash \
+    && curl -fsSL https://bun.sh/install | bash \
+    && mv /root/.bun/bin/bun /usr/local/bin/
+
 WORKDIR /app
 
-# Copy the built React application from the builder image
+# Copy frontend build
 COPY --from=builder /app/client/dist ./public
 
-# Copy the server application from the builder image
-COPY --from=builder /app/server .
+# Copy backend
+COPY --from=builder /app/server ./server
 
-# Expose port
+WORKDIR /app/server
 EXPOSE 8080
 
-# Start command
+# Start backend
 CMD ["bun", "server.js"]
