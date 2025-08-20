@@ -1,17 +1,14 @@
-# Use a Node.js LTS version as the base image
-FROM node:18-alpine
+# Use Bun official image
+FROM oven/bun:1 as base
 
 # Set working directory
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm
-
 # Copy only server package files first (for caching)
-COPY server/package.json server/pnpm-lock.yaml ./
+COPY server/package.json server/bun.lock ./
 
 # Install only production dependencies
-RUN pnpm install --prod
+RUN bun install --production --frozen-lockfile
 
 # Copy the rest of the server source code
 COPY server/ ./
@@ -19,5 +16,5 @@ COPY server/ ./
 # Expose port
 EXPOSE 8080
 
-# Start command
-CMD ["pnpm", "start"]
+# Start the server
+CMD ["bun", "start"]
