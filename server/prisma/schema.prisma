@@ -26,7 +26,7 @@ model Files {
   vectorId  String
   chatId    String
   type      String?
-  user      User?    @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Chats {

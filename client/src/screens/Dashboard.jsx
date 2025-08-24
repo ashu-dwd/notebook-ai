@@ -316,139 +316,81 @@ export default function Dashboard() {
       });
   };
 
-  const handleYoutubeUpload = () => {
-    if (!youtubeUrl) return;
+  const handleUpload = async (type, data) => {
+    if (!data) return;
 
     setIsUploading(true);
+    let endpoint = "";
+    let successMessage = "";
+    let errorMessage = "";
+    let payload = {};
 
-    const formData = new FormData();
-    formData.append("youtubeUrl", youtubeUrl);
+    switch (type) {
+      case "youtube":
+        endpoint = "/upload/youtube";
+        payload = { url: data };
+        successMessage = "✅ YouTube video uploaded successfully!";
+        errorMessage = "❌ YouTube upload failed!";
+        break;
+      case "website":
+        endpoint = "/upload/website";
+        payload = { websiteUrl: data };
+        successMessage = "✅ Website uploaded successfully!";
+        errorMessage = "❌ Website upload failed!";
+        break;
+      case "text":
+        endpoint = "/upload/text";
+        payload = { textContent: data };
+        successMessage = "✅ Text uploaded successfully!";
+        errorMessage = "❌ Text upload failed!";
+        break;
+      default:
+        setIsUploading(false);
+        return;
+    }
 
-    const toastId = notify("Uploading YouTube video...", "info", {
+    const toastId = notify(`Uploading ${type}...`, "info", {
       progress: 0,
       autoClose: false,
     });
 
-    axiosInstance
-      .post("/upload/youtube", JSON.stringify({ youtubeUrl }), {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        onUploadProgress: (progressEvent) => {
-          const progress = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          notify("Uploading YouTube video...", "info", {
-            id: toastId,
-            progress: progress,
-            autoClose: false,
-          });
-        },
-      })
-      .then((response) => {
-        if (response.data.success) {
-          notify("✅ YouTube video uploaded successfully!", "success");
-        } else {
-          notify(response.data.message || "❌ YouTube upload failed!", "error");
+    try {
+      const response = await axiosInstance.post(
+        endpoint,
+        JSON.stringify(payload),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          onUploadProgress: (progressEvent) => {
+            const progress = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            notify(`Uploading ${type}...`, "info", {
+              id: toastId,
+              progress: progress,
+              autoClose: false,
+            });
+          },
         }
-      })
-      .catch((error) => {
-        //console.error("YouTube upload error:", error);
-        notify("❌ YouTube upload failed!", "error");
-      })
-      .finally(() => {
-        setIsUploading(false);
-      });
-  };
+      );
 
-  const handleTextUpload = () => {
-    if (!textContent) return;
-
-    setIsUploading(true);
-
-    const formData = new FormData();
-    formData.append("textContent", textContent);
-
-    const toastId = notify("Uploading text...", "info", {
-      progress: 0,
-      autoClose: false,
-    });
-
-    axiosInstance
-      .post("/upload/text", JSON.stringify({ textContent }), {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        onUploadProgress: (progressEvent) => {
-          const progress = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          notify("Uploading text...", "info", {
-            id: toastId,
-            progress: progress,
-            autoClose: false,
-          });
-        },
-      })
-      .then((response) => {
-        if (response.data.success) {
-          notify("✅ Text uploaded successfully!", "success");
-        } else {
-          notify(response.data.message || "❌ Text upload failed!", "error");
-        }
-      })
-      .catch((error) => {
-        //console.error("Text upload error:", error);
-        notify("❌ Text upload failed!", "error");
-      })
-      .finally(() => {
-        setIsUploading(false);
-      });
-  };
-
-  const handleWebsiteUpload = () => {
-    if (!websiteUrl) return;
-
-    setIsUploading(true);
-
-    const formData = new FormData();
-    formData.append("websiteUrl", websiteUrl);
-
-    const toastId = notify("Uploading website...", "info", {
-      progress: 0,
-      autoClose: false,
-    });
-
-    axiosInstance
-      .post("/upload/website", JSON.stringify({ websiteUrl }), {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        onUploadProgress: (progressEvent) => {
-          const progress = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          notify("Uploading website...", "info", {
-            id: toastId,
-            progress: progress,
-            autoClose: false,
-          });
-        },
-      })
-      .then((response) => {
-        if (response.data.success) {
-          notify("✅ Website uploaded successfully!", "success");
-        } else {
-          notify(response.data.message || "❌ Website upload failed!", "error");
-        }
-      })
-      .catch((error) => {
-        //console.error("Website upload error:", error);
-        notify("❌ Website upload failed!", "error");
-      })
-      .finally(() => {
-        setIsUploading(false);
-      });
+      if (response.data.success) {
+        notify(successMessage, "success");
+        // Optionally refresh files if needed, depending on backend response
+        // For now, just close modal and clear input
+      } else {
+        notify(response.data.message || errorMessage, "error");
+      }
+    } catch (error) {
+      notify(errorMessage, "error");
+    } finally {
+      setIsUploading(false);
+      setIsModalOpen(false);
+      setYoutubeUrl("");
+      setWebsiteUrl("");
+      setTextContent("");
+    }
   };
 
   const handleLogout = () => {
@@ -784,9 +726,7 @@ export default function Dashboard() {
                   className="w-full mt-2 p-2 border border-black"
                 />
                 <button
-                  onClick={() => {
-                    handleYoutubeUpload();
-                  }}
+                  onClick={() => handleUpload("youtube", youtubeUrl)}
                   className="mt-2 p-2 bg-black text-white w-full hover:bg-gray-800 transition-colors"
                 >
                   Upload
@@ -824,13 +764,7 @@ export default function Dashboard() {
                   className="w-full mt-2 p-2 border border-black"
                 />
                 <button
-                  onClick={() => {
-                    // Handle Website upload logic here
-                    console.log("Uploading Website URL:", websiteUrl);
-                    notify("✅ Website upload initiated!", "success");
-                    setIsModalOpen(false);
-                    setWebsiteUrl("");
-                  }}
+                  onClick={() => handleUpload("website", websiteUrl)}
                   className="mt-2 p-2 bg-black text-white w-full hover:bg-gray-800 transition-colors"
                 >
                   Upload
@@ -848,13 +782,7 @@ export default function Dashboard() {
                   className="w-full mt-2 p-2 border border-black h-24 resize-none"
                 ></textarea>
                 <button
-                  onClick={() => {
-                    // Handle Text upload logic here
-                    console.log("Uploading Text Content:", textContent);
-                    notify("✅ Text upload initiated!", "success");
-                    setIsModalOpen(false);
-                    setTextContent("");
-                  }}
+                  onClick={() => handleUpload("text", textContent)}
                   className="mt-2 p-2 bg-black text-white w-full hover:bg-gray-800 transition-colors"
                 >
                   Upload

@@ -1,4 +1,4 @@
-import { searchVector } from "../services/chromadb.service.js";
+import { searchVectorStore } from "../services/langchain.service.js";
 import { getEmbeddings, getTextResponse } from "../services/llm.service.js";
 import ApiError from "../utils/ApiError.js";
 import { logger } from "../utils/logger.js";
@@ -7,9 +7,9 @@ import prisma from "../database/prisma.db.js";
 
 export const chatWithPdf = async (req, res) => {
   const { userMsg } = req.body;
-  const user = await prisma.userData.findUnique({
+  const user = await prisma.User.findUnique({
     where: { email: req.user.email },
-    select: { userId: true },
+    select: { id: true },
   });
 
   logger.info(userMsg);
@@ -44,8 +44,8 @@ export const chatWithPdf = async (req, res) => {
     console.log("vectorIds", vectorIds);
 
     // Query Chroma
-    const results = await searchVector(embeddings, req.user.userId);
-    console.log("chroma results", results);
+    const results = await searchVectorStore(embeddings, req.user.userId);
+    console.log("qdrant results", results);
 
     // Get AI response
     const responseFromAI = await getTextResponse(userMsg, results);

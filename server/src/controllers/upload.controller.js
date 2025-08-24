@@ -5,46 +5,56 @@ import {
 } from "../services/langchain.service.js";
 import { getEmbeddings } from "../services/llm.service.js";
 import { v4 as uuidv4 } from "uuid";
-import { addVector, deleteVector } from "../services/chromadb.service.js";
+import { addDocumentToVectorStore } from "../services/langchain.service.js";
+import { addDocument, deleteDocument } from "../services/qdrant.service.js";
 import { logger } from "../utils/logger.js";
 import ApiError from "../utils/ApiError.js";
 import prisma from "../database/prisma.db.js";
 
 const processAndStoreContent = async (userId, content, metadata) => {
-  const embedding = await getEmbeddings(content);
+  if (!userId) {
+    throw new ApiError(400, "UserId is required for storing content", []);
+  }
+
   const id = uuidv4();
-  const vectorResult = await addVector({
+
+  // Store in Qdrant
+  await addDocument(content, {
     id,
-    embedding,
     userId,
     text: content,
-    metadata,
+    ...metadata,
   });
+  console.log("🧩 Vector inserted with ID:", id);
 
-  logger.info("🧩 Vector inserted with ID:", vectorResult.id);
-
+  // Create file record in DB
   const chatId = uuidv4();
+  console.log("Attempting to create file record with userId:", userId); // Added logging
   await prisma.files.create({
     data: {
       userId,
       filePath: metadata.source,
-      vectorId: vectorResult.id,
+      vectorId: id,
       chatId,
       type: metadata.type,
     },
   });
-  return vectorResult.id;
+  console.log("File record created successfully for userId:", userId); // Added logging
+
+  return id;
 };
 
 export const handlePdfUpload = async (req, res) => {
-  //console.log("📂 Uploaded File:", req.file);
+  console.log("📂 Uploaded File:", req.file);
   const user = await prisma.user.findUnique({
     where: { email: req.user.email },
     select: { id: true },
   });
   console.log("User found:", user);
+  if (user) {
+    console.log("User ID retrieved:", user.id); // Added logging
+  }
   try {
-    logger.info("Uploaded file:", req.file);
     if (!user) {
       throw new ApiError(404, "User not found", [req.user.email]);
     }
@@ -53,33 +63,13 @@ export const handlePdfUpload = async (req, res) => {
     // 3️⃣ Process each page
     const addResults = await Promise.all(
       pages.map(async (page) => {
-        // Generate embedding
-        const embedding = await getEmbeddings(page.pageContent);
-        // Create unique vector ID
-        const id = uuidv4();
-        // Add vector to ChromaDB (or whichever DB)
-        const vectorResult = await addVector({
-          id,
-          embedding,
-          userId: user.id,
-          text: page.pageContent,
-          metadata: page.metadata,
-        });
-
-        console.log("🧩 Vector inserted with ID:", vectorResult.id);
-
-        const chatId = uuidv4();
-        await prisma.files.create({
-          data: {
-            userId: user.id,
-            filePath: req.file.path,
-            vectorId: vectorResult.id,
-            chatId,
-          },
-        });
-
-        // console.log("✅ File inserted with ID:", fileInsert.lastInsertRowid);
-        return vectorResult.id;
+        const vectorId = await processAndStoreContent(
+          user.id,
+          page.pageContent,
+          { source: req.file.path, type: "pdf", ...page.metadata }
+        );
+        console.log("🧩 Vector inserted with ID:", vectorId);
+        return vectorId;
       })
     );
 
@@ -91,7 +81,7 @@ export const handlePdfUpload = async (req, res) => {
       message: "PDF uploaded and processed successfully",
     });
   } catch (error) {
-    logger.error("❌ Error in PDF upload handling:", error);
+    console.error("❌ Error in PDF upload handling:", error);
     throw new ApiError(500, "Failed to process PDF upload", [error.message]);
   }
 };
@@ -135,8 +125,8 @@ export const deleteUploadedFiles = async (req, res) => {
     if (!file) {
       throw new ApiError(404, "File not found", [fileId]);
     }
-    //delete vectorIds from chroma db
-    console.log(file);
+    //delete vectorIds from qdrant db
+    await deleteDocument(file.vectorId);
 
     await deleteVector(file.vectorId);
 
@@ -150,7 +140,7 @@ export const deleteUploadedFiles = async (req, res) => {
       message: "File deleted successfully",
     });
   } catch (error) {
-    logger.error("❌ Error in deleting uploaded files:", error);
+    console.error("❌ Error in deleting uploaded files:", error);
     throw new ApiError(500, "Failed to delete uploaded files", [error.message]);
   }
 };
@@ -188,7 +178,8 @@ export const handleTextUpload = async (req, res) => {
 };
 
 export const handleWebsiteUpload = async (req, res) => {
-  const { url } = req.body;
+  const { websiteUrl } = req.body;
+  console.log("Uploading Website URL:", req.body);
   const user = await prisma.user.findUnique({
     where: { email: req.user.email },
     select: { id: true },
@@ -198,19 +189,22 @@ export const handleWebsiteUpload = async (req, res) => {
     throw new ApiError(404, "User not found", [req.user.email]);
   }
 
-  if (!url) {
-    throw new ApiError(400, "URL is required", []);
+  if (!websiteUrl) {
+    throw new ApiError(400, "Website URL is required", []);
   }
 
   try {
-    const chunks = await chunkWebsite(url);
+    const chunks = await chunkWebsite(websiteUrl);
     const addResults = await Promise.all(
       chunks.map(async (chunk) => {
+        console.log("Processing Website chunk:", chunk);
+
         const vectorId = await processAndStoreContent(
           user.id,
           chunk.pageContent,
-          { source: url, type: "website" }
+          { source: websiteUrl, type: "website" }
         );
+        console.log("Processing Website chunk, vectorId:", vectorId);
         return vectorId;
       })
     );
@@ -220,7 +214,7 @@ export const handleWebsiteUpload = async (req, res) => {
       message: "Website content uploaded and processed successfully",
     });
   } catch (error) {
-    logger.error("❌ Error in website upload handling:", error);
+    console.error("❌ Error in website upload handling:", error);
     throw new ApiError(500, "Failed to process website upload", [
       error.message,
     ]);
@@ -229,6 +223,7 @@ export const handleWebsiteUpload = async (req, res) => {
 
 export const handleYoutubeUpload = async (req, res) => {
   const { url } = req.body;
+  console.log("Uploading YouTube URL:", url);
   const user = await prisma.user.findUnique({
     where: { email: req.user.email },
     select: { id: true },
@@ -249,8 +244,9 @@ export const handleYoutubeUpload = async (req, res) => {
         const vectorId = await processAndStoreContent(
           user.id,
           chunk.pageContent,
-          { source: url, type: "youtube" }
+          { source: url, type: "youtube", ...chunk.metadata }
         );
+        console.log("Processing YouTube chunk, vectorId:", vectorId);
         return vectorId;
       })
     );

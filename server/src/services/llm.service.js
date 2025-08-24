@@ -15,8 +15,8 @@ export const getEmbeddings = async (text) => {
     input: text,
     encoding_format: "float",
   });
+  console.log("in llm.service.js", embedding.data[0].embedding.length);
   return embedding.data[0].embedding;
-  //console.log(embedding.data[0].embedding);
 };
 
 export const getTextResponse = async (userMsg, vectorData) => {
@@ -37,3 +37,5 @@ export const getTextResponse = async (userMsg, vectorData) => {
   });
   return response.choices[0].message.content;
 };
+
+await getEmbeddings("Sample text for embedding");
