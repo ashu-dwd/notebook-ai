@@ -3,22 +3,23 @@ import { getEmbeddings, getTextResponse } from "../services/llm.service.js";
 import ApiError from "../utils/ApiError.js";
 import { logger } from "../utils/logger.js";
 
-import { db, runQuery } from "../database/sqlLite.db.js";
+import prisma from "../database/prisma.db.js";
 
 export const chatWithPdf = async (req, res) => {
   const { userMsg } = req.body;
-  const user = await runQuery(
-    "SELECT userId FROM userData WHERE email = ? LIMIT 1",
-    [req.user.email]
-  );
+  const user = await prisma.userData.findUnique({
+    where: { email: req.user.email },
+    select: { userId: true },
+  });
 
   logger.info(userMsg);
 
   try {
     // Fetch chatId
-    const files = await runQuery("SELECT chatId FROM files WHERE userId = ?", [
-      user.userId,
-    ]);
+    const files = await prisma.files.findMany({
+      where: { userId: req.user.userId },
+      select: { chatId: true },
+    });
 
     if (!files || files.length === 0) {
       return res.json({
@@ -35,10 +36,10 @@ export const chatWithPdf = async (req, res) => {
     console.log("embedding length", embeddings.length);
 
     // ✅ Flatten vectorIds
-    const vectorRows = await runQuery(
-      `SELECT vectorId FROM files WHERE userId = ?`,
-      [req.user.userId]
-    );
+    const vectorRows = await prisma.files.findMany({
+      where: { userId: req.user.userId },
+      select: { vectorId: true },
+    });
     const vectorIds = vectorRows.map((row) => row.vectorId);
     console.log("vectorIds", vectorIds);
 
@@ -49,10 +50,13 @@ export const chatWithPdf = async (req, res) => {
     // Get AI response
     const responseFromAI = await getTextResponse(userMsg, results);
     //saving into database
-    await runQuery(
-      `INSERT INTO chats (userId, userMsg, aiResponse) VALUES (?, ?, ?)`,
-      [user.userId, userMsg, responseFromAI]
-    );
+    await prisma.chats.create({
+      data: {
+        userId: user.userId,
+        userMsg,
+        aiResponse: responseFromAI,
+      },
+    });
     logger.info("Chat history saved successfully");
 
     return res.status(200).json({

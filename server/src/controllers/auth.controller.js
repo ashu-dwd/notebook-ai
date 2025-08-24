@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { createJwtToken } from "../utils/jwtMaker.js";
-import { runQuery } from "../database/sqlLite.db.js";
+import prisma from "../database/prisma.db.js";
 import cookieParser from "cookie-parser";
 
 export const handleUserSignUp = async (req, res) => {
@@ -13,12 +13,9 @@ export const handleUserSignUp = async (req, res) => {
   }
 
   // Check if user already exists
-  const existingUser = runQuery(`SELECT * FROM userData WHERE email = ?`, [
-    email,
-  ]);
-  //console.log(existingUser);
+  const existingUser = await prisma.userData.findUnique({ where: { email } });
 
-  if (existingUser.length > 0) {
+  if (existingUser) {
     return res
       .status(409)
       .json({ success: false, error: "User already exists" });
@@ -28,20 +25,13 @@ export const handleUserSignUp = async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Create new user
-  const newUser = await runQuery(
-    `
-    INSERT INTO userData (name, email, password)
-    VALUES (?, ?, ?)
-  `,
-    [name, email, hashedPassword]
-  );
+  const newUser = await prisma.userData.create({
+    data: { name, email, password: hashedPassword },
+  });
   console.log(newUser);
 
   // Generate JWT
-  const { accessToken, refreshToken } = createJwtToken(
-    email,
-    newUser.lastInsertRowid
-  );
+  const { accessToken, refreshToken } = createJwtToken(email, newUser.id);
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
@@ -66,13 +56,13 @@ export const handleUserLogin = async (req, res) => {
   }
 
   // Check if user exists
-  const user = runQuery(`SELECT * FROM userData WHERE email = ?`, [email]);
-  if (user.length === 0) {
+  const user = await prisma.userData.findUnique({ where: { email } });
+  if (!user) {
     return res.status(404).json({ success: false, error: "User not found" });
   }
 
   // Check password
-  const isPasswordValid = await bcrypt.compare(password, user[0].password);
+  const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) {
     return res
       .status(401)
@@ -80,10 +70,7 @@ export const handleUserLogin = async (req, res) => {
   }
 
   // Generate JWT
-  const { accessToken, refreshToken } = createJwtToken(
-    user[0].email,
-    user[0].userId
-  );
+  const { accessToken, refreshToken } = createJwtToken(user.email, user.userId);
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,

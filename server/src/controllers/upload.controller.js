@@ -4,13 +4,40 @@ import { v4 as uuidv4 } from "uuid";
 import { addVector, deleteVector } from "../services/chromadb.service.js";
 import { logger } from "../utils/logger.js";
 import ApiError from "../utils/ApiError.js";
-import { db, runQuery } from "../database/sqlLite.db.js";
+import prisma from "../database/prisma.db.js";
+
+const processAndStoreContent = async (userId, content, metadata) => {
+  const embedding = await getEmbeddings(content);
+  const id = uuidv4();
+  const vectorResult = await addVector({
+    id,
+    embedding,
+    userId,
+    text: content,
+    metadata,
+  });
+
+  logger.info("🧩 Vector inserted with ID:", vectorResult.id);
+
+  const chatId = uuidv4();
+  await prisma.files.create({
+    data: {
+      userId,
+      filePath: metadata.source,
+      vectorId: vectorResult.id,
+      chatId,
+      type: metadata.type,
+    },
+  });
+  return vectorResult.id;
+};
 
 export const handlePdfUpload = async (req, res) => {
   //console.log("📂 Uploaded File:", req.file);
-  const user = runQuery("SELECT userId FROM userData WHERE email = ? LIMIT 1", [
-    req.user.email,
-  ]);
+  const user = await prisma.userData.findUnique({
+    where: { email: req.user.email },
+    select: { userId: true },
+  });
   console.log("User found:", user);
   try {
     logger.info("Uploaded file:", req.file);
@@ -38,13 +65,14 @@ export const handlePdfUpload = async (req, res) => {
         console.log("🧩 Vector inserted with ID:", vectorResult.id);
 
         const chatId = uuidv4();
-        await runQuery(
-          `
-    INSERT INTO files (userId, filePath, vectorId, chatId)
-    VALUES (?, ?, ?, ?)
-  `,
-          [user.userId, req.file.path, vectorResult.id, chatId]
-        );
+        await prisma.files.create({
+          data: {
+            userId: user.userId,
+            filePath: req.file.path,
+            vectorId: vectorResult.id,
+            chatId,
+          },
+        });
 
         // console.log("✅ File inserted with ID:", fileInsert.lastInsertRowid);
         return vectorResult.id;
@@ -66,19 +94,19 @@ export const handlePdfUpload = async (req, res) => {
 
 export const getUploadedFiles = async (req, res) => {
   try {
-    const user = await runQuery(
-      "SELECT userId FROM userData WHERE email = ? LIMIT 1",
-      [req.user.email]
-    );
+    const user = await prisma.userData.findUnique({
+      where: { email: req.user.email },
+      select: { userId: true },
+    });
 
     if (!user) {
       throw new ApiError(404, "User not found", [req.user.email]);
     }
 
-    const files = await runQuery(
-      "SELECT fileId, filePath FROM files WHERE userId = ?",
-      [user.userId]
-    );
+    const files = await prisma.files.findMany({
+      where: { userId: user.userId },
+      select: { fileId: true, filePath: true },
+    });
 
     return res.json({
       success: true,
@@ -97,20 +125,21 @@ export const deleteUploadedFiles = async (req, res) => {
 
   try {
     // Check if file exists
-    const file = await runQuery(
-      "SELECT * FROM files WHERE fileId = ? AND userId = ?",
-      [fileId, userId]
-    );
+    const file = await prisma.files.findFirst({
+      where: { fileId, userId },
+    });
     if (!file) {
       throw new ApiError(404, "File not found", [fileId]);
     }
     //delete vectorIds from chroma db
     console.log(file);
 
-    await deleteVector(file[0].vectorId);
+    await deleteVector(file.vectorId);
 
     // Delete file from database
-    await runQuery("DELETE FROM files WHERE fileId = ?", [fileId]);
+    await prisma.files.delete({
+      where: { fileId },
+    });
 
     return res.json({
       success: true,
@@ -121,3 +150,5 @@ export const deleteUploadedFiles = async (req, res) => {
     throw new ApiError(500, "Failed to delete uploaded files", [error.message]);
   }
 };
+
+export const handleTextUpload = async (req, res) => {};

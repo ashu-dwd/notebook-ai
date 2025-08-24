@@ -1,15 +1,13 @@
-import { runQuery } from "../database/sqlLite.db.js";
+import prisma from "../database/prisma.db.js";
 
 export const getChatHistory = async (req, res) => {
   const userId = req.user.userId;
 
   try {
-    const chatHistory = await runQuery(
-      `SELECT * FROM chats 
-       WHERE userId = ? 
-       ORDER BY createdAt ASC`, // ✅ oldest → newest
-      [userId]
-    );
+    const chatHistory = await prisma.chats.findMany({
+      where: { userId },
+      orderBy: { createdAt: "asc" },
+    });
 
     res.json({
       success: true,

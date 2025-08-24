@@ -12,5 +12,8 @@ const router = express.Router();
 router.post("/", verifyJwtToken, upload.single("pdfFile"), handlePdfUpload);
 router.get("/", verifyJwtToken, getUploadedFiles);
 router.delete("/:fileId", verifyJwtToken, deleteUploadedFiles);
+// router.post("/text", verifyJwtToken, handleTextUpload);
+// router.post("/website", verifyJwtToken, handleWebsiteUpload);
+// router.post("/youtube", verifyJwtToken, handleYoutubeUpload);
 
 export default router;

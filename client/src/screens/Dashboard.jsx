@@ -16,6 +16,9 @@ import {
   Plus,
   Trash2,
   Download,
+  Youtube,
+  Globe,
+  Type,
 } from "lucide-react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -51,6 +54,10 @@ export default function Dashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isLoadingChat, setIsLoadingChat] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false); // New state for modal
+  const [youtubeUrl, setYoutubeUrl] = useState(""); // State for YouTube URL
+  const [websiteUrl, setWebsiteUrl] = useState(""); // State for Website URL
+  const [textContent, setTextContent] = useState(""); // State for Text Content
   const chatEndRef = useRef(null);
 
   const navigate = useNavigate();
@@ -309,6 +316,141 @@ export default function Dashboard() {
       });
   };
 
+  const handleYoutubeUpload = () => {
+    if (!youtubeUrl) return;
+
+    setIsUploading(true);
+
+    const formData = new FormData();
+    formData.append("youtubeUrl", youtubeUrl);
+
+    const toastId = notify("Uploading YouTube video...", "info", {
+      progress: 0,
+      autoClose: false,
+    });
+
+    axiosInstance
+      .post("/upload/youtube", JSON.stringify({ youtubeUrl }), {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          notify("Uploading YouTube video...", "info", {
+            id: toastId,
+            progress: progress,
+            autoClose: false,
+          });
+        },
+      })
+      .then((response) => {
+        if (response.data.success) {
+          notify("✅ YouTube video uploaded successfully!", "success");
+        } else {
+          notify(response.data.message || "❌ YouTube upload failed!", "error");
+        }
+      })
+      .catch((error) => {
+        //console.error("YouTube upload error:", error);
+        notify("❌ YouTube upload failed!", "error");
+      })
+      .finally(() => {
+        setIsUploading(false);
+      });
+  };
+
+  const handleTextUpload = () => {
+    if (!textContent) return;
+
+    setIsUploading(true);
+
+    const formData = new FormData();
+    formData.append("textContent", textContent);
+
+    const toastId = notify("Uploading text...", "info", {
+      progress: 0,
+      autoClose: false,
+    });
+
+    axiosInstance
+      .post("/upload/text", JSON.stringify({ textContent }), {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          notify("Uploading text...", "info", {
+            id: toastId,
+            progress: progress,
+            autoClose: false,
+          });
+        },
+      })
+      .then((response) => {
+        if (response.data.success) {
+          notify("✅ Text uploaded successfully!", "success");
+        } else {
+          notify(response.data.message || "❌ Text upload failed!", "error");
+        }
+      })
+      .catch((error) => {
+        //console.error("Text upload error:", error);
+        notify("❌ Text upload failed!", "error");
+      })
+      .finally(() => {
+        setIsUploading(false);
+      });
+  };
+
+  const handleWebsiteUpload = () => {
+    if (!websiteUrl) return;
+
+    setIsUploading(true);
+
+    const formData = new FormData();
+    formData.append("websiteUrl", websiteUrl);
+
+    const toastId = notify("Uploading website...", "info", {
+      progress: 0,
+      autoClose: false,
+    });
+
+    axiosInstance
+      .post("/upload/website", JSON.stringify({ websiteUrl }), {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          notify("Uploading website...", "info", {
+            id: toastId,
+            progress: progress,
+            autoClose: false,
+          });
+        },
+      })
+      .then((response) => {
+        if (response.data.success) {
+          notify("✅ Website uploaded successfully!", "success");
+        } else {
+          notify(response.data.message || "❌ Website upload failed!", "error");
+        }
+      })
+      .catch((error) => {
+        //console.error("Website upload error:", error);
+        notify("❌ Website upload failed!", "error");
+      })
+      .finally(() => {
+        setIsUploading(false);
+      });
+  };
+
   const handleLogout = () => {
     removeToken();
     notify("✅ You have been logged out successfully!", "success");
@@ -361,34 +503,14 @@ export default function Dashboard() {
 
             {/* Upload Button */}
             <div className="relative">
-              <input
-                type="file"
-                onChange={handleFileUpload}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                accept=".pdf,.doc,.docx,.txt"
-              />
               <button
-                className={`w-full p-3 border-2 border-black font-semibold transition-colors flex items-center justify-center ${
-                  isUploading
-                    ? "bg-gray-300 cursor-not-allowed"
-                    : "hover:bg-black hover:text-white"
-                }`}
-                disabled={isUploading}
+                onClick={() => setIsModalOpen(true)} // Open modal on click
+                className="w-full p-3 border-2 border-black font-semibold transition-colors flex items-center justify-center hover:bg-black hover:text-white"
               >
-                {isUploading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Files
-                  </>
-                )}
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Something
               </button>
             </div>
-            {/* enter website */}
           </div>
 
           {/* Files List */}
@@ -410,10 +532,10 @@ export default function Dashboard() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <File className="h-4 w-4" />
+                        <div className="flex items-start space-x-2 mb-1 flex-wrap">
+                          <File className="h-4 w-4 flex-shrink-0" />
                           <span
-                            className="font-bold text-sm truncate"
+                            className="font-bold text-sm break-words w-full"
                             title={fileName}
                           >
                             {fileName}
@@ -643,6 +765,116 @@ export default function Dashboard() {
         </div>
       </div>
       <ToastContainer />
+
+      {/* Upload Options Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white border-2 border-black p-6 w-11/12 max-w-2xl">
+            <h2 className="text-xl font-bold mb-4">Choose Upload Option</h2>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Upload YouTube Video */}
+              <div className="flex flex-col items-center justify-center p-4 border-2 border-black">
+                <Youtube className="h-8 w-8 mb-2" />
+                <span>Upload YouTube Video</span>
+                <input
+                  type="text"
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  placeholder="YouTube URL"
+                  className="w-full mt-2 p-2 border border-black"
+                />
+                <button
+                  onClick={() => {
+                    handleYoutubeUpload();
+                  }}
+                  className="mt-2 p-2 bg-black text-white w-full hover:bg-gray-800 transition-colors"
+                >
+                  Upload
+                </button>
+              </div>
+
+              {/* Upload File */}
+              <div className="relative flex flex-col items-center justify-center p-4 border-2 border-black">
+                <input
+                  type="file"
+                  onChange={(e) => {
+                    handleFileUpload(e);
+                    e.target.value = null; // Clear the input value to allow re-uploading the same file
+                    setIsModalOpen(false); // Close modal after file selection
+                  }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  accept=".pdf,.doc,.docx,.txt"
+                />
+                <File className="h-8 w-8 mb-2" />
+                <span>Upload File</span>
+                <button className="mt-2 p-2 bg-black text-white w-full hover:bg-gray-800 transition-colors pointer-events-none">
+                  Upload
+                </button>
+              </div>
+
+              {/* Upload Website */}
+              <div className="flex flex-col items-center justify-center p-4 border-2 border-black">
+                <Globe className="h-8 w-8 mb-2" />
+                <span>Upload Website</span>
+                <input
+                  type="text"
+                  value={websiteUrl}
+                  onChange={(e) => setWebsiteUrl(e.target.value)}
+                  placeholder="Website URL"
+                  className="w-full mt-2 p-2 border border-black"
+                />
+                <button
+                  onClick={() => {
+                    // Handle Website upload logic here
+                    console.log("Uploading Website URL:", websiteUrl);
+                    notify("✅ Website upload initiated!", "success");
+                    setIsModalOpen(false);
+                    setWebsiteUrl("");
+                  }}
+                  className="mt-2 p-2 bg-black text-white w-full hover:bg-gray-800 transition-colors"
+                >
+                  Upload
+                </button>
+              </div>
+
+              {/* Upload Text */}
+              <div className="flex flex-col items-center justify-center p-4 border-2 border-black">
+                <Type className="h-8 w-8 mb-2" />
+                <span>Upload Text</span>
+                <textarea
+                  value={textContent}
+                  onChange={(e) => setTextContent(e.target.value)}
+                  placeholder="Paste your text here..."
+                  className="w-full mt-2 p-2 border border-black h-24 resize-none"
+                ></textarea>
+                <button
+                  onClick={() => {
+                    // Handle Text upload logic here
+                    console.log("Uploading Text Content:", textContent);
+                    notify("✅ Text upload initiated!", "success");
+                    setIsModalOpen(false);
+                    setTextContent("");
+                  }}
+                  className="mt-2 p-2 bg-black text-white w-full hover:bg-gray-800 transition-colors"
+                >
+                  Upload
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setIsModalOpen(false);
+                setYoutubeUrl("");
+                setWebsiteUrl("");
+                setTextContent("");
+              }}
+              className="mt-6 w-full p-3 border-2 border-black font-semibold hover:bg-red-600 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
