@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import {
   Brain,
   User,
@@ -59,7 +62,7 @@ export default function Dashboard() {
 
   //checking sessionStorage has token or not then navigate to login
   useEffect(() => {
-    const token = sessionStorage.getItem("token");
+    const token = sessionStorage.getItem("USER_SESS_TOKEN");
     if (!token) {
       notify("❌ You need to log in first!", "error");
       navigate("/login", { replace: true });
@@ -385,6 +388,7 @@ export default function Dashboard() {
                 )}
               </button>
             </div>
+            {/* enter website */}
           </div>
 
           {/* Files List */}
@@ -478,9 +482,56 @@ export default function Dashboard() {
                             <Brain className="h-5 w-5 mt-1 flex-shrink-0" />
                           )}
                           <div className="flex-1">
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                            <ReactMarkdown
+                              components={{
+                                code({
+                                  inline,
+                                  className,
+                                  children,
+                                  ...props
+                                }) {
+                                  const match = /language-(\w+)/.exec(
+                                    className || ""
+                                  );
+                                  return !inline && match ? (
+                                    <div className="relative group">
+                                      {/* Copy Button */}
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(
+                                            String(children).trim()
+                                          );
+                                        }}
+                                        className="absolute top-2 right-2 bg-gray-700 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
+                                      >
+                                        Copy
+                                      </button>
+
+                                      {/* Syntax Highlighter */}
+                                      <SyntaxHighlighter
+                                        style={atomDark}
+                                        language={match[1]}
+                                        PreTag="div"
+                                        {...props}
+                                      >
+                                        {String(children).replace(/\n$/, "")}
+                                      </SyntaxHighlighter>
+                                    </div>
+                                  ) : (
+                                    <code
+                                      className={`bg-gray-200 px-1 rounded text-sm ${
+                                        className || ""
+                                      }`}
+                                      {...props}
+                                    >
+                                      {String(children)}
+                                    </code>
+                                  );
+                                },
+                              }}
+                            >
                               {msg.content}
-                            </p>
+                            </ReactMarkdown>
                             <div
                               className={`text-xs mt-2 ${
                                 msg.type === "user"

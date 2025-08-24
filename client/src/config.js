@@ -1,1 +1,1 @@
-export const BACKEND_API_URL = "https://notebook-ai-416c.onrender.com/api/v1";
+export const BACKEND_API_URL = "http://localhost:8080/api/v1";
