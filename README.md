@@ -37,6 +37,6 @@ Notebook LM is a web application for creating and managing notes. It allows user
 
 The application can be deployed using Docker. See the `Dockerfile` and `docker-compose.yml` files for more information.
 
-## Website Link
+## Video Link
 
-[https://notebook-ai-416c.onrender.com](https://notebook-ai-416c.onrender.com)
+[Google Drive link](https://drive.google.com/file/d/1VU73cGdgLsrZwtfWHE0ihYJXJAcTOPhz/view?usp=drivesdk)
