@@ -1,4 +1,8 @@
-import { chunkPdf } from "../services/langchain.service.js";
+import {
+  chunkPdf,
+  chunkWebsite,
+  chunkYoutube,
+} from "../services/langchain.service.js";
 import { getEmbeddings } from "../services/llm.service.js";
 import { v4 as uuidv4 } from "uuid";
 import { addVector, deleteVector } from "../services/chromadb.service.js";
@@ -34,9 +38,9 @@ const processAndStoreContent = async (userId, content, metadata) => {
 
 export const handlePdfUpload = async (req, res) => {
   //console.log("📂 Uploaded File:", req.file);
-  const user = await prisma.userData.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email: req.user.email },
-    select: { userId: true },
+    select: { id: true },
   });
   console.log("User found:", user);
   try {
@@ -57,7 +61,7 @@ export const handlePdfUpload = async (req, res) => {
         const vectorResult = await addVector({
           id,
           embedding,
-          userId: req.user.userId,
+          userId: user.id,
           text: page.pageContent,
           metadata: page.metadata,
         });
@@ -67,7 +71,7 @@ export const handlePdfUpload = async (req, res) => {
         const chatId = uuidv4();
         await prisma.files.create({
           data: {
-            userId: user.userId,
+            userId: user.id,
             filePath: req.file.path,
             vectorId: vectorResult.id,
             chatId,
@@ -94,9 +98,9 @@ export const handlePdfUpload = async (req, res) => {
 
 export const getUploadedFiles = async (req, res) => {
   try {
-    const user = await prisma.userData.findUnique({
+    const user = await prisma.user.findUnique({
       where: { email: req.user.email },
-      select: { userId: true },
+      select: { id: true },
     });
 
     if (!user) {
@@ -104,7 +108,7 @@ export const getUploadedFiles = async (req, res) => {
     }
 
     const files = await prisma.files.findMany({
-      where: { userId: user.userId },
+      where: { userId: user.id },
       select: { fileId: true, filePath: true },
     });
 
@@ -151,4 +155,114 @@ export const deleteUploadedFiles = async (req, res) => {
   }
 };
 
-export const handleTextUpload = async (req, res) => {};
+export const handleTextUpload = async (req, res) => {
+  const { text } = req.body;
+  const user = await prisma.user.findUnique({
+    where: { email: req.user.email },
+    select: { id: true },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found", [req.user.email]);
+  }
+
+  if (!text) {
+    throw new ApiError(400, "Text is required", []);
+  }
+
+  try {
+    const metadata = {
+      source: "text-upload",
+      type: "text",
+    };
+    const vectorId = await processAndStoreContent(user.id, text, metadata);
+    return res.json({
+      success: true,
+      message: "Text uploaded and processed successfully",
+      vectorId,
+    });
+  } catch (error) {
+    logger.error("❌ Error in text upload handling:", error);
+    throw new ApiError(500, "Failed to process text upload", [error.message]);
+  }
+};
+
+export const handleWebsiteUpload = async (req, res) => {
+  const { url } = req.body;
+  const user = await prisma.user.findUnique({
+    where: { email: req.user.email },
+    select: { id: true },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found", [req.user.email]);
+  }
+
+  if (!url) {
+    throw new ApiError(400, "URL is required", []);
+  }
+
+  try {
+    const chunks = await chunkWebsite(url);
+    const addResults = await Promise.all(
+      chunks.map(async (chunk) => {
+        const vectorId = await processAndStoreContent(
+          user.id,
+          chunk.pageContent,
+          { source: url, type: "website" }
+        );
+        return vectorId;
+      })
+    );
+    return res.json({
+      success: true,
+      count: addResults.length,
+      message: "Website content uploaded and processed successfully",
+    });
+  } catch (error) {
+    logger.error("❌ Error in website upload handling:", error);
+    throw new ApiError(500, "Failed to process website upload", [
+      error.message,
+    ]);
+  }
+};
+
+export const handleYoutubeUpload = async (req, res) => {
+  const { url } = req.body;
+  const user = await prisma.user.findUnique({
+    where: { email: req.user.email },
+    select: { id: true },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found", [req.user.email]);
+  }
+
+  if (!url) {
+    throw new ApiError(400, "URL is required", []);
+  }
+
+  try {
+    const chunks = await chunkYoutube(url);
+    const addResults = await Promise.all(
+      chunks.map(async (chunk) => {
+        const vectorId = await processAndStoreContent(
+          user.id,
+          chunk.pageContent,
+          { source: url, type: "youtube" }
+        );
+        return vectorId;
+      })
+    );
+    return res.json({
+      success: true,
+      count: addResults.length,
+      message: "YouTube transcript uploaded and processed successfully",
+    });
+  } catch (error) {
+    logger.error("❌ Error in YouTube upload handling:", error);
+    throw new ApiError(500, "Failed to process YouTube upload", [
+      error.message,
+    ]);
+  }
+};

@@ -13,7 +13,7 @@ export const handleUserSignUp = async (req, res) => {
   }
 
   // Check if user already exists
-  const existingUser = await prisma.userData.findUnique({ where: { email } });
+  const existingUser = await prisma.user.findUnique({ where: { email } });
 
   if (existingUser) {
     return res
@@ -25,7 +25,7 @@ export const handleUserSignUp = async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Create new user
-  const newUser = await prisma.userData.create({
+  const newUser = await prisma.user.create({
     data: { name, email, password: hashedPassword },
   });
   console.log(newUser);
@@ -56,7 +56,7 @@ export const handleUserLogin = async (req, res) => {
   }
 
   // Check if user exists
-  const user = await prisma.userData.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
     return res.status(404).json({ success: false, error: "User not found" });
   }
@@ -70,7 +70,7 @@ export const handleUserLogin = async (req, res) => {
   }
 
   // Generate JWT
-  const { accessToken, refreshToken } = createJwtToken(user.email, user.userId);
+  const { accessToken, refreshToken } = createJwtToken(user.email, user.id);
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,

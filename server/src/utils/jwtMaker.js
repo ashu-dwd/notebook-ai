@@ -1,17 +1,17 @@
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../../config/contants.js";
 
-export const createJwtToken = (userEmail, userId) => {
+export const createJwtToken = (userEmail, id) => {
   const accessTokenPayload = {
     email: userEmail,
-    userId: userId,
+    userId: id,
     type: "access",
   };
   //console.log(accessTokenPayload);
 
   const refreshTokenPayload = {
     email: userEmail,
-    userId: userId,
+    userId: id,
     type: "refresh",
   };
   //console.log(refreshTokenPayload);
